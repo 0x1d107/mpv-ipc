@@ -1,0 +1,36 @@
+#!/bin/env python
+ 
+import json,socket,argparse,os,sys,random
+
+MPV_SOCK="/tmp/mpvsocket"
+
+parser = argparse.ArgumentParser()
+parser.add_argument('command',nargs='+',help="Command to send to mpv")
+args = parser.parse_args()
+sock = socket.socket(socket.AF_UNIX,socket.SOCK_STREAM)
+if not os.path.exists(MPV_SOCK):
+    print(f"No mpv socket found at {MPV_SOCK}",file=sys.stderr)
+    exit(1)
+try:
+    sock.connect(MPV_SOCK)
+except socket.error as e:
+    print(f"Can't connect to mpv socket at {MPV_SOCK}",file=sys.stderr)
+    exit(1)
+rq_id = random.randint(-2**63,2**63)
+sock.sendall((json.dumps({"command":args.command,'request_id':rq_id})+'\n').encode('utf8'))
+sock_file = sock.makefile()
+data={}
+while True:
+    string_data = sock_file.readline()
+    try:
+        data = json.loads(string_data)
+    except json.JSONDecodeError as e:
+        print(f"error decoding string {string_data}",file=sys.stderr)
+        raise e
+    if 'request_id' in data and data['request_id'] ==rq_id:
+        break
+print(data["error"],file=sys.stderr)
+if data["error"] != "success":
+    print(data,file=sys.stderr)
+if 'data' in data and data['data'] is not None:
+    print(data['data'])
