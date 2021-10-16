@@ -1,0 +1,8 @@
+#!/bin/bash
+mpvpid="`pgrep ^mpv$`"
+if [[ -z "$mpvpid"  ]]; then
+       	mpv --input-ipc-server='/tmp/mpvsocket' --really-quiet --idle --no-video $@ < /dev/null > /dev/null 2>/dev/null  &
+	while [[ -z "`pgrep ^mpv$`" || -z `mpv-ipc get_property idle-active 2> /dev/null ` ]]; do
+		sleep 0.5
+	done
+fi
