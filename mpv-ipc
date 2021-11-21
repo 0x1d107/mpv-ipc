@@ -1,6 +1,6 @@
 #!/bin/env python
  
-import json,socket,argparse,os,sys,random
+import json,socket,argparse,os,sys,random,time
 
 MPV_SOCK="/tmp/mpvsocket"
 
@@ -29,6 +29,7 @@ while True:
         raise e
     if 'request_id' in data and data['request_id'] ==rq_id:
         break
+    time.sleep(0.2)
 print(data["error"],file=sys.stderr)
 if data["error"] != "success":
     print(data,file=sys.stderr)
